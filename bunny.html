@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Stanford Bunny</title>
+	<meta charset="utf-8"/>
+	<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec3 vPosition;
+		uniform mat4 modelMatrix;
+		uniform mat3 normalMatrix;
+		uniform mat4 viewMatrix;
+		uniform mat4 projectionMatrix;
+		attribute vec3 vNormal;
+		varying vec3 N, pointL, spotL, E, spotLightDir;
+		uniform vec4 pointLightPosition;
+		uniform vec4 spotLightPosition;
+		uniform vec3 spotLightPointAt;
+		void main(){
+			N = normalMatrix*vNormal;
+			vec3 postrans = (modelMatrix*vec4(vPosition, 1.0)).xyz;
+			pointL = normalize(pointLightPosition.xyz - postrans);
+			spotL = normalize(spotLightPosition.xyz - postrans);
+			E = normalize(vec3(0.0, 0.0, 10.0) - postrans);
+			spotLightDir = normalize(spotLightPosition.xyz - spotLightPointAt);
+			gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4(vPosition, 1.0);
+		}
+	</script>
+	<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;
+
+		uniform vec4 pointAmbientProduct;
+		uniform vec4 pointDiffuseProduct;
+		uniform vec4 pointSpecularProduct;
+
+		uniform vec4 spotAmbientProduct;
+		uniform vec4 spotDiffuseProduct;
+		uniform vec4 spotSpecularProduct;
+
+		uniform float shininess;
+		uniform float cutoff;
+		uniform float attenuation;
+		varying vec3 N, pointL, spotL, E, spotLightDir;
+		void main(){
+			float pointKd = 0.0;
+			float pointKs = 0.0;
+			vec3 newN = normalize(N);
+			vec4 pointAmbient = pointAmbientProduct;
+			vec3 R = normalize(2.0 * dot(newN, pointL) * newN - pointL);
+			pointKd = max(dot(pointL, newN), 0.0);
+			pointKs = pow( max(dot(E, R), 0.0), shininess);
+			vec4 pointDiffuse = pointKd * pointDiffuseProduct;
+			vec4 pointSpecular = pointKs * pointSpecularProduct;
+			if(dot(pointL,N) < 0.0) pointSpecular = vec4(0.0, 0.0, 0.0, 1.0);
+
+			float spotKs = 0.0;
+			float spotKd = 0.0;
+			vec4 spotAmbient = vec4(0.0, 0.0, 0.0, 1.0);
+			vec3 spotR = normalize(2.0 * dot(newN, spotL) * newN - spotL);
+			float angleCutoff = dot(-spotL, -spotLightDir);
+			if (angleCutoff > cutoff){
+				spotKs = pow( max(dot(E, spotR), 0.0), shininess) * pow(angleCutoff, attenuation);
+				spotKd = max(dot(spotL, newN), 0.0) * pow(angleCutoff, attenuation);
+				spotAmbient = spotAmbientProduct * pow(angleCutoff, attenuation);
+			}
+
+			vec4 spotDiffuse = spotKd * spotDiffuseProduct;
+			vec4 spotSpecular = spotKs * spotSpecularProduct;
+			if(dot(spotL,newN) < 0.0) spotSpecular = vec4(0.0, 0.0, 0.0, 1.0);
+
+			vec4 fColor = pointAmbient + pointDiffuse + pointSpecular + spotAmbient + spotDiffuse +  spotSpecular;
+			fColor.r = min(1.0, fColor.r);
+			fColor.g = min(1.0, fColor.g);
+			fColor.b = min(1.0, fColor.b);
+			fColor.a = 1.0;
+    		gl_FragColor = fColor;
+    	}
+	</script>
+	<script type="text/javascript" src="./Common/webgl-utils.js"></script>
+	<script type="text/javascript" src="./Common/initShaders.js"></script>
+	<script type="text/javascript" src="./Common/MV.js"></script>
+	<script type="text/javascript" src="./bunnycode.js"></script>
+	<script type="text/javascript" src="./bunny.js"></script>
+</head>
+<body>
+<canvas id="gl-canvas" width="480" height="480" oncontextmenu="return false">>
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+</body>
+</html>
