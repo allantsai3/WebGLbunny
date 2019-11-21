@@ -11,3 +11,9 @@ TODO
 
 1. Download and extract the zip file
 2. Run the bunny.html file
+
+## Instructions
+
+Press any of the following on your keyboard:
+* [s] : Stop the movement of the spotlight
+* [p] : Stop the movement of the pointlight
