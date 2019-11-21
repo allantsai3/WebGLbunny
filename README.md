@@ -5,7 +5,7 @@ Uses the Phong Model to bring realistic shader to the rendering.
 
 ## Demo
 
-TODO
+![](bunnygif.gif)
     
 ## Installation and setup
 
